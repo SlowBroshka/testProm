@@ -13,10 +13,16 @@ namespace common
 class ServerSocket : public Socket
 {
 public:
-    ServerSocket(ushort serverPort);
+    ServerSocket();
+
+    auto startListen(ushort port, int nConnections = 1) -> void;
+
+    auto getConnectionSocket() -> ServerSocket;
+    
+    auto read() -> std::string;
 
 private:
-    auto bind() -> void;
+    auto bind() -> bool;
     auto static setSocketAddr(ushort port) -> sockaddr_in;
 };
 

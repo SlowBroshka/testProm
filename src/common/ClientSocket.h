@@ -3,8 +3,6 @@
 
 #include "Socket.h"
 
-
-
 namespace common
 {
 
@@ -14,13 +12,16 @@ struct Message
     std::string data;
 };
 
+
 class ClientSocket : public Socket
 {
 public:
-    ClientSocket(const std::string &servAddr, ushort serverPort);
+    ClientSocket();
 
 public:
-    auto connect()-> bool;
+    auto connect(const std::string &servAddr, ushort serverPort)-> bool;
+
+    auto write(const std::string& data) -> bool;
 
     virtual ~ClientSocket();
 private:

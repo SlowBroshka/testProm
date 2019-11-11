@@ -1,67 +1,42 @@
-#include <netdb.h>
-#include <netinet/in.h>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <unistd.h>
+#include "../common/ClientSocket.h"
 
-void error(const char *msg)
-{
-    perror(msg);
-    exit(0);
-}
+
 
 int main(int argc, char *argv[])
 {
-    int sockfd, portno, n;
-    sockaddr_in serv_addr{};
-    hostent *server;
-
-    char buffer[256];
     if (argc < 3)
     {
-        fprintf(stderr, "usage %s hostname port\n", argv[0]);
+        std::cout << "usage "<< argv[0] <<" hostname port" << std::endl;
         exit(0);
     }
-    portno = atoi(argv[2]);
-    sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (sockfd < 0)
-        error("ERROR opening socket");
-    server = gethostbyname(argv[1]);
-    if (server == nullptr)
-    {
-        fprintf(stderr, "ERROR, no such host\n");
-        exit(0);
-    }
-    bzero((char *)&serv_addr, sizeof(serv_addr));
-    serv_addr.sin_family = AF_INET;
-    bcopy(
-        (char *)server->h_addr,
-        (char *)&serv_addr.sin_addr.s_addr,
-        server->h_length);
-    serv_addr.sin_port = htons(portno);
+    auto serverArrd = std::string(argv[1]);
+    auto serverPort = strtol(argv[2], &argv[2], 10);
+    
+    std::cout << "serverArrd: " << serverArrd << " serverPort: " << serverPort << std::endl;
 
-    if (connect(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
-        error("ERROR connecting");
+    common::ClientSocket clientSocket{};
+
+    if (!clientSocket.connect(serverArrd, serverPort)) {
+        std::cerr << "Connection error" << std::endl;
+        exit(1);
+    }
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wmissing-noreturn"
     while (true)
     {
         printf("Please enter the message: ");
-        bzero(buffer, 256);
-        fgets(buffer, 255, stdin);
-        n = write(sockfd, buffer, strlen(buffer));
-        if (n < 0)
-            error("ERROR writing to socket");
-        bzero(buffer, 256);
-        n = read(sockfd, buffer, 255);
-        if (n < 0)
-            error("ERROR reading from socket");
-        printf("%s\n", buffer);
+        std::string msg{};
+        std::cin >> msg;
+        if (clientSocket.write(msg)) {
+            std::cout << "\nWrite success" << std::endl;
+        } else {
+            std::cout << "\nWrite failed" << std::endl;
+        }
+
+//        n = read(sockfd, buffer, 255);
+//        if (n < 0)
+//            error("ERROR reading from socket");
     }
 #pragma clang diagnostic pop
-    close(sockfd);
     return 0;
 }

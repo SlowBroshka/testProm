@@ -9,8 +9,9 @@
 #include <netdb.h>
 #include <cstdio>
 #include <cstdlib>
-#include <thread>
+#include <cstring>
 #include <iostream>
+#include <thread>
 
 #include <netinet/in.h>
 #include <sys/socket.h>
@@ -30,6 +31,9 @@ protected:
     sockaddr_in socketAddr;
 
     std::thread thread;
+    
+public:
+    constexpr static uint buffSize = 256;
 };
 
 } // namespace common

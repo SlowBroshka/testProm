@@ -1,19 +1,13 @@
 #include "ClientSocket.h"
 
-#include <netdb.h>
 
-#include <netinet/in.h>
-#include <cstring>
-#include <sys/socket.h>
-#include <sys/types.h>
 
 namespace common
 {
 
-ClientSocket::ClientSocket(const std::string &servAddr, ushort serverPort)
+ClientSocket::ClientSocket()
 {
-    _port = serverPort;
-    socketAddr = setSocketAddr(servAddr, serverPort);
+    socketFd = socket(AF_INET, SOCK_STREAM, 0);
 }
 
 ClientSocket::~ClientSocket()
@@ -25,25 +19,38 @@ auto ClientSocket::setSocketAddr(const std::string &servAddr, ushort port)
     -> sockaddr_in
 {
     hostent *server = gethostbyname(servAddr.c_str());
-
     sockaddr_in res{};
     res.sin_family = AF_INET;
     res.sin_port = htons(port);
-    bcopy(
+    ::bcopy(
         (char *)server->h_addr,
         (char *)&res.sin_addr.s_addr,
         server->h_length);
-
     return res;
 }
 
-auto ClientSocket::connect() -> bool
+auto ClientSocket::connect(
+    const std::string &servAddr, ushort serverPort) -> bool
 {
-    if (::connect(socketFd, (struct sockaddr *)&socketAddr, sizeof(socketAddr)) < 0) {
+    _port = serverPort;
+    socketAddr = setSocketAddr(servAddr, serverPort);
+    if (::connect(socketFd, (sockaddr *)&socketAddr, sizeof(socketAddr)) < 0) {
         std::cerr << "Connection socket error " <<std::endl;
         return false;
     }
     return true;
+}
+
+auto ClientSocket::write(const std::string &data) -> bool
+{
+    char buffer[buffSize];
+    ::bzero(buffer, buffSize);
+    ::bcopy(data.c_str(), &buffer, data.size());
+    if (data.size() < buffSize) {
+        int n = ::write(socketFd, buffer, data.size());
+        return n > 0;
+    }
+    return false;
 }
 
 } // namespace common
